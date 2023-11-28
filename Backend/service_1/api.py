@@ -167,23 +167,65 @@ def afficher_stock_sortie():
 
     return jsonify({'stock_sortie': stock_sortie})
 
-# Endpoints pour insérer des données
-@app.route('/inserer_stock_entree', methods=['POST'])
+# Endpoint pour insérer des données d'entrée
+@app.route('/addstock', methods=['POST'])
 def inserer_stock_entree():
-    data = request.json
-    id_produit = data.get('id_produit')
-    quantite_entree = data.get('quantite_entree')
-    date_entree = data.get('date_entree')
-    id_fournisseur = data.get('id_fournisseur')
+    nlp = spacy.load("../model/model_prestige")
+    try:
+        data = request.get_json()
+        if 'text' not in data:
+            return jsonify({'message': 'Clé manquante dans les données.'}), 400
 
-    query = '''
-    INSERT INTO Stock_Entrees (ID_Produit, Quantite_Entree, Date_Entree, ID_Fournisseur)
-    VALUES (%s, %s, %s, %s)
-    '''
-    with conn.cursor() as cursor:
-        cursor.execute(query, (id_produit, quantite_entree, date_entree, id_fournisseur))
+        # Extraire les entités à partir du texte avec le modèle SpaCy
+        doc = nlp(data['text'])
+        entities_list = [{'text': ent.text, 'label': ent.label_} for ent in doc.ents]
 
-    return jsonify({'message': 'Données d\'entrée insérées avec succès'}), 200
+        # Listes pour stocker les résultats
+        failure_records = []
+
+        # Traiter chaque ensemble d'entités
+        for i in range(0, len(entities_list), 4):
+            # Extraire les informations nécessaires pour une ligne
+            nom_fournisseur = entities_list[i].get('text') if entities_list[i].get('label') == 'NomFournisseur' else None
+            nom_produit = entities_list[i + 1].get('text') if entities_list[i + 1].get('label') == 'NomProduit' else None
+            quantite_entree = entities_list[i + 2].get('text') if entities_list[i + 2].get('label') == 'Stock' else None
+            date_entree = entities_list[i + 3].get('text') if entities_list[i + 3].get('label') == 'Date' else None
+
+            # Récupérer l'ID du produit
+            query_produit = 'SELECT ID_Produit FROM Produits WHERE Nom_Produit = %s'
+            with conn.cursor() as cursor:
+                cursor.execute(query_produit, (nom_produit,))
+                id_produit = cursor.fetchone()[0] if cursor.rowcount > 0 else None
+
+            # Récupérer l'ID du fournisseur
+            query_fournisseur = 'SELECT ID_Fournisseur FROM Fournisseurs WHERE Nom_Fournisseur = %s'
+            with conn.cursor() as cursor:
+                cursor.execute(query_fournisseur, (nom_fournisseur,))
+                id_fournisseur = cursor.fetchone()[0] if cursor.rowcount > 0 else None
+
+            # Vérifier les IDs récupérés
+            if id_produit is None or id_fournisseur is None:
+                failure_records.append({
+                    'message': f"Enregistrement échoué. l'ID de {nom_produit} ou de {nom_fournisseur} est introuvable."
+                })
+            else:
+                # Effectuer l'insertion après avoir vérifié et récupéré les IDs
+                query_insert = '''
+                INSERT INTO Stock_Entrees (ID_Produit, Quantite_Entree, Date_Entree, ID_Fournisseur)
+                VALUES (%s, %s, %s, %s)
+                '''
+                with conn.cursor() as cursor:
+                    cursor.execute(query_insert, (id_produit, quantite_entree, date_entree, id_fournisseur))
+
+        # Retourner les résultats au frontend
+        return jsonify({'message': failure_records}), 200
+
+    except errors.Error as e:
+        return jsonify({'message': 'Erreur lors de l\'insertion des données d\'entrée : ', 'erreur': str(e)}), 501
+
+    except Exception as e:
+        return jsonify({'message': 'Erreur inattendue lors de l\'insertion des données d\'entrée : ', 'erreur': str(e)}), 500
+
 
 @app.route('/inserer_stock_sortie', methods=['POST'])
 def inserer_stock_sortie():
