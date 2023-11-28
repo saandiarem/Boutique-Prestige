@@ -61,6 +61,30 @@ def login():
     else:
         return jsonify({'message': 'Echec de la connexion'}), 401
 
+# Endpoint Produit
+@app.route('/add_product', methods=['POST'])
+def add_product():
+    try:
+        data = request.json
+        nom_produit = data.get('nom')
+        prix_produit = data.get('prix')
+        description_produit = data.get('desc')
+        print(nom_produit, prix_produit, description_produit)
+        query = '''
+        INSERT INTO PRODUITS (NOM_PRODUIT, PRIX_UNITAIRE, DESCRIPTION)
+        VALUES (%s, %s, %s)
+        '''
+        with conn.cursor() as cursor:
+            cursor.execute(query, (nom_produit, prix_produit, description_produit))
+
+        return jsonify({'message': 'Produit créé avec succès'}), 201
+
+    except errors.Error as e:
+        return jsonify({'message': 'Erreur lors de l\'insertion du Produit : ' , 'erreur': str(e)}), 500
+
+    except Exception as e:
+        return jsonify({'message': 'Erreur inattendue lors de l\'ajout du Produit : '  , 'erreur': str(e)}), 500
+
 # Endpoint fournisseur
 @app.route('/add_fournisseur', methods=['POST'])
 def creer_fournisseur():
@@ -86,7 +110,7 @@ def creer_fournisseur():
         return jsonify({'message': 'Erreur inattendue lors de la création du fournisseur : '  , 'erreur': str(e)}), 500
 
 # Endpoint créer un client
-@app.route('/creer_client', methods=['POST'])
+@app.route('/add_client', methods=['POST'])
 def creer_client():
     try:
         data = request.json
@@ -95,7 +119,7 @@ def creer_client():
         contact_client = data.get('contact')
 
         query = '''
-        INSERT INTO Clients (Nom_Client, Adresse, Contact)
+        INSERT INTO Clients (NOM_CLIENT, ADRESSE, CONTACT)
         VALUES (%s, %s, %s)
         '''
         with conn.cursor() as cursor:
@@ -142,8 +166,18 @@ def afficher_client():
         with conn.cursor() as cursor:
             cursor.execute(query)
             clients = cursor.fetchall()
+            
+            cleints_transformes = [
+            {
+                'ID_CLIENT': row[0],
+                'Nom_Client': row[1],
+                'Adresse': row[2],
+                'Contact': row[3]
+            }
+            for row in clients
+        ]
 
-        return jsonify({'clients': clients})
+        return jsonify({'clients': cleints_transformes})
     except errors.Error as e:
         return jsonify({'message': 'Erreur lors de la recupération des clients', 'errur': str(e)}), 500
     except Exception as e:
