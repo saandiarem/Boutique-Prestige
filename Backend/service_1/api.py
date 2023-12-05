@@ -61,6 +61,74 @@ def login():
     else:
         return jsonify({'message': 'Echec de la connexion'}), 401
 
+# Endpoint pour obtenir le nombre de Produit,Fournisseur et Client
+@app.route('/statistiques', methods=['GET'])
+def obtenir_statistiques():
+    try:
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT COUNT(*) FROM PRODUITS")
+        nombre_produits = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM FOURNISSEURS")
+        nombre_fournisseurs = cursor.fetchone()[0]
+
+        cursor.execute("SELECT COUNT(*) FROM CLIENTS")
+        nombre_clients = cursor.fetchone()[0]
+
+        cursor.close()
+
+        return jsonify({
+            'product': nombre_produits,
+            'fournisseurs': nombre_fournisseurs,
+            'clients': nombre_clients
+        }), 201
+
+    except Exception as e:
+        return jsonify({'message': 'Erreur inattendue lors de la recupération des donnees : '  , 'erreur': str(e)}), 501
+
+# Endpoint pour obtenir le dataset
+@app.route('/dataset', methods=['GET'])
+def obtenir_dataset():
+    try:
+        cursor = conn.cursor()
+        query = """
+            SELECT
+                P.NOM_PRODUIT,
+                P.PRIX_UNITAIRE,
+                COALESCE(SE.QUANTITE_ENTREE, 0) AS QUANTITE_ENTREE,
+                COALESCE(SS.QUANTITE_SORTIE, 0) AS QUANTITE_SORTIE,
+                GREATEST(COALESCE(SE.QUANTITE_ENTREE, 0) - COALESCE(SS.QUANTITE_SORTIE, 0), 0) AS QUANTITE_RESTANTE
+            FROM
+                PRODUITS P
+            LEFT JOIN
+                STOCK_ENTREES SE ON P.ID_PRODUIT = SE.ID_PRODUIT
+            LEFT JOIN
+                STOCK_SORTIES SS ON P.ID_PRODUIT = SS.ID_PRODUIT
+        """
+        cursor.execute(query)
+
+        results = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        dataset = []
+        for row in results:
+            dataset.append({
+                'Nom': row[0],
+                'price': row[1],
+                'stentree': row[2],
+                'stsortie': row[3],
+                'stock': row[4]
+            })
+
+        return jsonify(dataset),201
+    except Exception as e:
+        # Gestion des autres erreurs
+        return jsonify({'error': f"Erreur inattendue : {str(e)}"}), 500
+
+
 # Endpoint Produit
 @app.route('/add_product', methods=['POST'])
 def add_product():
