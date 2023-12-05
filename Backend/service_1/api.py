@@ -111,7 +111,7 @@ def obtenir_dataset():
         results = cursor.fetchall()
 
         cursor.close()
-        conn.close()
+        #conn.close()
 
         dataset = []
         for row in results:
