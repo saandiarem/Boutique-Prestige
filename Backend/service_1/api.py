@@ -10,9 +10,10 @@ CORS(app)
 
 snowflake_user = 'METAGILE'
 snowflake_password = 'Tresbavard2@'
-snowflake_account = 'GOLUJUF-PX53325'
+snowflake_account = 'EFAYRLD-PD16606'
 snowflake_database = 'BOUTIQUE'
-snowflake_schema = 'public'  
+snowflake_schema = 'public'
+snowflake_warehouse = 'publique'  
 
 
 conn = snowflake.connector.connect(
@@ -20,14 +21,15 @@ conn = snowflake.connector.connect(
     password=snowflake_password,
     account=snowflake_account,
     database=snowflake_database,
-    schema=snowflake_schema
+    schema=snowflake_schema,
+    warehouse = snowflake_warehouse
 )
 
 
 # Endpoint de extract
 @app.route('/spacyextract', methods=['POST'])
 def spacy_extract():
-    nlp = spacy.load("../model/model_prestige")
+    nlp = spacy.load("../modeles/model_prestige")
     try:
         data = request.get_json()
         if 'text' not in data:
@@ -96,22 +98,23 @@ def obtenir_dataset():
             SELECT
                 P.NOM_PRODUIT,
                 P.PRIX_UNITAIRE,
-                COALESCE(SE.QUANTITE_ENTREE, 0) AS QUANTITE_ENTREE,
-                COALESCE(SS.QUANTITE_SORTIE, 0) AS QUANTITE_SORTIE,
-                GREATEST(COALESCE(SE.QUANTITE_ENTREE, 0) - COALESCE(SS.QUANTITE_SORTIE, 0), 0) AS QUANTITE_RESTANTE
+                COALESCE(SUM(SE.QUANTITE_ENTREE), 0) AS QUANTITE_ENTREE,
+                COALESCE(SUM(SS.QUANTITE_SORTIE), 0) AS QUANTITE_SORTIE,
+                GREATEST(COALESCE(SUM(SE.QUANTITE_ENTREE), 0) - COALESCE(SUM(SS.QUANTITE_SORTIE), 0), 0) AS QUANTITE_RESTANTE
             FROM
                 PRODUITS P
             LEFT JOIN
                 STOCK_ENTREES SE ON P.ID_PRODUIT = SE.ID_PRODUIT
             LEFT JOIN
                 STOCK_SORTIES SS ON P.ID_PRODUIT = SS.ID_PRODUIT
+            GROUP BY
+                P.NOM_PRODUIT, P.PRIX_UNITAIRE
         """
         cursor.execute(query)
 
         results = cursor.fetchall()
 
         cursor.close()
-        #conn.close()
 
         dataset = []
         for row in results:
@@ -123,7 +126,7 @@ def obtenir_dataset():
                 'stock': row[4]
             })
 
-        return jsonify(dataset),201
+        return jsonify(dataset), 201
     except Exception as e:
         # Gestion des autres erreurs
         return jsonify({'error': f"Erreur inattendue : {str(e)}"}), 500
@@ -272,7 +275,7 @@ def afficher_stock_sortie():
 # Endpoint pour insérer des données d'entrée
 @app.route('/addstock', methods=['POST'])
 def inserer_stock_entree():
-    nlp = spacy.load("../model/model_prestige")
+    nlp = spacy.load("../modeles/model_prestige")
     try:
         data = request.get_json()
         if 'text' not in data:

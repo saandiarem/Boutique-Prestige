@@ -4,7 +4,7 @@ import json
 import numpy as np
 from flask_cors import CORS
 
-load_model = pickle.load(open('../model/logisticReg_prestigeboutique.pickle','rb'))
+load_model = pickle.load(open('../modeles/logisticReg_prestigeboutique.pickle','rb'))
 # Create Flask application
 
 app = Flask(__name__)
