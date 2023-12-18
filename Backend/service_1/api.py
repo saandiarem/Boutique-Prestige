@@ -311,7 +311,7 @@ def inserer_stock_entree():
             # Vérifier les IDs récupérés
             if id_produit is None or id_fournisseur is None:
                 failure_records.append({
-                    'message': f"Enregistrement échoué. l'ID de {nom_produit} ou de {nom_fournisseur} est introuvable."
+                    'message': f"le produit {nom_produit} ou le fournisseur {nom_fournisseur} est introuvable."
                 })
             else:
                 # Effectuer l'insertion après avoir vérifié et récupéré les IDs
@@ -371,7 +371,7 @@ def inserer_stock_sortie():
             # Vérifier les IDs récupérés
             if id_produit is None or id_client is None:
                 failure_records.append({
-                    'message': f"Enregistrement échoué. l'ID du produit {nom_produit} ou du client {nom_client} est introuvable."
+                    'message': f"le produit {nom_produit} ou le client {nom_client} est introuvable."
                 })
             else:
                 # Effectuer l'insertion après avoir vérifié et récupéré les IDs
