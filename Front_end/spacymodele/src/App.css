@@ -1,0 +1,39 @@
+.red-row {
+  background-color: rgba(255, 0, 0, 0.1); /* Fond rouge clair */
+  color: red; /* Texte en rouge */
+}
+.low-stock {
+  color: red; /* ou toute autre couleur que vous souhaitez utiliser */
+  font-weight: bold; /* ou tout autre style que vous souhaitez appliquer */
+}
+
+#predcit {
+  background-image: url('./components/prediction/background.jpeg');
+  background-size: cover;  /* Ajuste la taille de l'image pour couvrir entièrement le conteneur */
+  background-position: center;  /* Centre l'image horizontalement et verticalement */
+  height: 100vh;  /* Ajuste la hauteur du conteneur pour occuper la pleine hauteur de la vue */
+  margin: 0;  /* Supprime les marges par défaut du body */
+}
+
+.scrolling-message-container {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.scrolling-message-item {
+  display: inline-block;
+  margin-right: 20px; /* Espace entre les messages */
+  animation: scrollText 10s linear infinite;
+  font-weight: bold; /* Texte en gras */
+  color: red; /* Texte en rouge */
+}
+
+@keyframes scrollText {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+

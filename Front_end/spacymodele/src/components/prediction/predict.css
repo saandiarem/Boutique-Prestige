@@ -1,0 +1,7 @@
+#predcit {
+    background-image: url('./background.jpeg');
+    background-size: cover;  /* Ajuste la taille de l'image pour couvrir entièrement le conteneur */
+    background-position: center;  /* Centre l'image horizontalement et verticalement */
+    height: 100vh;  /* Ajuste la hauteur du conteneur pour occuper la pleine hauteur de la vue */
+    margin: 0;  /* Supprime les marges par défaut du body */
+  }
